@@ -8,13 +8,20 @@
     "test-cov-html": "lab -f -L -a code -r html -o coverage.html",
     "coveralls": "lab -r lcov | coveralls"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PixulHQ/schwifty-i18n.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PixulHQ/schwifty-i18n/issues"
+  },
+  "homepage": "https://github.com/PixulHQ/schwifty-i18n#README",
   "keywords": [
-    "hapi",
-    "hapipal",
-    "hpal",
     "objection",
     "schwifty",
-    "i18n"
+    "i18n",
+    "translation",
+    "database"
   ],
   "author": "Daniel COLE <daniel@leggett.fr>",
   "license": "MIT",
