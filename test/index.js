@@ -14,7 +14,7 @@ const SchwiftyI18n = require('../lib');
 
 // Test shortcuts
 
-const { describe, it } = exports.lab = Lab.script();
+const { describe, it, before } = exports.lab = Lab.script();
 const { expect } = Code;
 
 Model.knex(Knex({
@@ -137,6 +137,13 @@ describe('index', () => {
 
     };
 
+    let modelsNoOptions;
+
+    before(() => {
+
+        modelsNoOptions = SchwiftyI18n(base);
+    });
+
     it('should return an array of exactly two items', () => {
 
         expect(SchwiftyI18n(base).length).to.equal(2);
@@ -144,8 +151,7 @@ describe('index', () => {
 
     it('should return a translation model with default name', () => {
 
-        const models = SchwiftyI18n(base);
-        expect(models.translation.name).to.equal('baseTranslation');
+        expect(modelsNoOptions.translation.name).to.equal('baseTranslation');
     });
 
     it('should return a translation model with different name', () => {
@@ -158,30 +164,26 @@ describe('index', () => {
 
     it('should return a translation object with a valid joi object', () => {
 
-        const models = SchwiftyI18n(base);
-
-        expect(models.translation.joiObject).to.be.a.object();
-        expect(models.translation.joiObject.id).to.exist();
-        expect(models.translation.joiObject.tableId).to.exist();
-        expect(models.translation.joiObject.locale).to.exist();
-        expect(models.translation.joiObject.column).to.exist();
-        expect(models.translation.joiObject.translation).to.exist();
+        expect(modelsNoOptions.translation.joiObject).to.be.a.object();
+        expect(modelsNoOptions.translation.joiObject.id).to.exist();
+        expect(modelsNoOptions.translation.joiObject.tableId).to.exist();
+        expect(modelsNoOptions.translation.joiObject.locale).to.exist();
+        expect(modelsNoOptions.translation.joiObject.column).to.exist();
+        expect(modelsNoOptions.translation.joiObject.translation).to.exist();
     });
 
     it('should return a model with valid relation mappings', () => {
 
-        const models = SchwiftyI18n(base);
-
         const mapping = {
             relation   : Model.HasManyRelation,
-            modelClass : models.translation,
+            modelClass : modelsNoOptions.translation,
             join       : {
                 from : 'base.id',
                 to   : 'baseTranslation.tableId'
             }
         };
 
-        expect(models.model.relationMappings()).to.equal({
+        expect(modelsNoOptions.model.relationMappings()).to.equal({
             'i18n' : mapping
         });
 
@@ -194,9 +196,7 @@ describe('index', () => {
 
     it('should extend base joi schema to add relation mapping', () => {
 
-        const models = SchwiftyI18n(base);
-
-        expect(models.model.joiSchema.describe().children).to.include(['id', 'name', 'i18n']);
+        expect(modelsNoOptions.model.joiSchema.describe().children).to.include(['id', 'name', 'i18n']);
 
         const m = SchwiftyI18n(base, { relationName : 'test' });
 
@@ -207,16 +207,12 @@ describe('index', () => {
 
         it('should return the object as is if no locale is passed', () => {
 
-            const models = SchwiftyI18n(base);
-
-            expect(models.model.translate({ test : 'test' })).to.equal({ test : 'test' });
+            expect(modelsNoOptions.model.translate({ test : 'test' })).to.equal({ test : 'test' });
         });
 
         it('should transform the object with given locale', () => {
 
-            const models = SchwiftyI18n(base);
-
-            expect(models.model.translate({
+            expect(modelsNoOptions.model.translate({
                 test : 'test',
                 i18n : [
                     {
@@ -238,11 +234,9 @@ describe('index', () => {
 
         it('should throw error if locale not found', () => {
 
-            const models = SchwiftyI18n(base);
-
             expect(() => {
 
-                return models.model.translate({
+                return modelsNoOptions.model.translate({
                     test : 'test',
                     i18n : [
                         {
@@ -260,40 +254,36 @@ describe('index', () => {
 
         it('should create correct model for database', () => {
 
-            const models = SchwiftyI18n(base);
-
             const b = {
                 id   : 1,
                 name : 'nom'
             };
 
-            expect(models.model.i18nFormat(b, 'fr')).to.equal({ ...b, i18n : [{ locale : 'fr', column : 'name', translation : b.name }] });
+            expect(modelsNoOptions.model.i18nFormat(b, 'fr')).to.equal({ ...b, i18n : [{ locale : 'fr', column : 'name', translation : b.name }] });
 
         });
 
         it('should override existing translations', () => {
 
-            const models = SchwiftyI18n(base);
             const b      = {
                 id   : 1,
                 name : 'nom',
                 i18n : [{ locale : 'fr', column : 'name', translation : 'oldtranslation' }]
             };
 
-            expect(models.model.i18nFormat(b, 'fr')).to.equal({ ...b, i18n : [{ locale : 'fr', column : 'name', translation : b.name }] });
+            expect(modelsNoOptions.model.i18nFormat(b, 'fr')).to.equal({ ...b, i18n : [{ locale : 'fr', column : 'name', translation : b.name }] });
         });
 
         it('should keep any existing locales', () => {
 
-            const models = SchwiftyI18n(base);
             const b      = {
                 id   : 1,
                 name : 'nom',
                 i18n : [{ locale : 'en', column : 'name', translation : 'name' }]
             };
 
-            expect(models.model.i18nFormat(b, 'fr').i18n.length).to.equal(2);
-            expect(models.model.i18nFormat(b, 'fr').i18n)
+            expect(modelsNoOptions.model.i18nFormat(b, 'fr').i18n.length).to.equal(2);
+            expect(modelsNoOptions.model.i18nFormat(b, 'fr').i18n)
                 .to
                 .equal([{ locale : 'en', column : 'name', translation : 'name' }, { locale : 'fr', column : 'name', translation : 'nom' }]);
 
@@ -304,9 +294,7 @@ describe('index', () => {
 
         it('should define translatable properties', () => {
 
-            const models = SchwiftyI18n(base);
-
-            expect(models.model.translatable).to.equal(['name']);
+            expect(modelsNoOptions.model.translatable).to.equal(['name']);
         });
 
     });
