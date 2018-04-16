@@ -1,0 +1,38 @@
+{
+  "name": "schwifty-i18n",
+  "version": "0.0.1",
+  "description": "A Schwifty plugin to make the task of i18n easier and less repetitive",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "lab -a code -I '__core-js_shared__' -L",
+    "test-cov-html": "lab -f -L -a code -r html -o coverage.html",
+    "coveralls": "lab -r lcov | coveralls"
+  },
+  "keywords": [
+    "hapi",
+    "hapipal",
+    "hpal",
+    "objection",
+    "schwifty",
+    "i18n"
+  ],
+  "author": "Daniel COLE <daniel@leggett.fr>",
+  "license": "MIT",
+  "dependencies": {
+    "hoek": "5.x.x",
+    "lodash.merge": "^4.x.x",
+    "joi": "^13.x.x"
+  },
+  "peerDependencies": {
+    "schwifty": "4.x.x"
+  },
+  "devDependencies": {
+    "coveralls": "3.x.x",
+    "code": "^5.2.0",
+    "knex": "0.14.x",
+    "lab": "^15.4.1",
+    "objection": "1.x.x",
+    "schwifty": "4.x.x",
+    "sqlite3": "^4.0.0"
+  }
+}
