@@ -20,7 +20,6 @@
   "license": "MIT",
   "dependencies": {
     "hoek": "5.x.x",
-    "lodash.merge": "^4.x.x",
     "joi": "^13.x.x"
   },
   "peerDependencies": {

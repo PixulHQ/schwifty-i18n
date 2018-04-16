@@ -299,4 +299,15 @@ describe('index', () => {
 
         });
     });
+
+    describe('translatable', () => {
+
+        it('should define translatable properties', () => {
+
+            const models = SchwiftyI18n(base);
+
+            expect(models.model.translatable).to.equal(['name']);
+        });
+
+    });
 });
