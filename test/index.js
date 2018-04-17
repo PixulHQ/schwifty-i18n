@@ -171,7 +171,6 @@ describe('index', () => {
     it('should return a translation object with a valid joi object', () => {
 
         expect(modelsNoOptions.translation.joiObject).to.be.a.object();
-        expect(modelsNoOptions.translation.joiObject.id).to.exist();
         expect(modelsNoOptions.translation.joiObject.tableId).to.exist();
         expect(modelsNoOptions.translation.joiObject.locale).to.exist();
         expect(modelsNoOptions.translation.joiObject.column).to.exist();
@@ -267,7 +266,7 @@ describe('index', () => {
 
             expect(modelsNoOptions.model.i18nFormat(model, 'fr'))
                 .to
-                .equal({ ...model, i18n : [{ locale : 'fr', column : 'name', translation : model.name }] });
+                .equal({ id : model.id, i18n : [{ locale : 'fr', column : 'name', translation : 'nom' }] });
 
         });
 
@@ -281,7 +280,7 @@ describe('index', () => {
 
             expect(modelsNoOptions.model.i18nFormat(model, 'fr'))
                 .to
-                .equal({ ...model, i18n : [{ locale : 'fr', column : 'name', translation : model.name }] });
+                .equal({ id : model.id, i18n : [{ locale : 'fr', column : 'name', translation : 'nom' }] });
         });
 
         it('should keep any existing locales', () => {
