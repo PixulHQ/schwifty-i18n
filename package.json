@@ -4,7 +4,7 @@
   "description": "A Schwifty plugin to make the task of i18n easier and less repetitive",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab -a code -I '__core-js_shared__' -L",
+    "test": "lab -c -a code -I '__core-js_shared__' -L",
     "test-cov-html": "lab -f -L -a code -r html -o coverage.html",
     "coveralls": "lab -r lcov | coveralls"
   },
