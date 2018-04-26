@@ -1,0 +1,2650 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Tests &amp; Coverage</title>
+    <script>
+      headings = [];
+    
+      onload = function () {
+          headings = document.querySelectorAll('h2');
+          reset();
+      };
+    
+      onscroll = function (e) {
+          var heading = find(window.scrollY);
+          if (!heading) {
+            var current = document.querySelector('#menu a.active');
+            if (current) {
+              current.className = '';
+            }
+            return;
+          }
+          var links = document.querySelectorAll('#menu a')
+                  , link;
+    
+          for (var i = 0, len = links.length; i < len; ++i) {
+              link = links[i];
+              link.className = link.getAttribute('href') == '#' + heading.id ? 'active' : '';
+          }
+      };
+    
+      function find (y) {
+          var i = headings.length
+                  , heading;
+    
+          while (i--) {
+              heading = headings[i];
+              if (y >= heading.offsetTop) {
+                  return heading;
+              }
+          }
+      }
+    
+      function toggle (className) {
+    
+          var elements = document.getElementsByClassName(className);
+    
+          for (var i = 0, il = elements.length; i < il; ++i) {
+              var element = elements[i];
+    
+              if (element.classList.contains('hide')) {
+                  element.classList.remove('hide');
+                  element.classList.add('show');
+              }
+              else {
+                  element.classList.remove('show');
+                  element.classList.add('hide');
+              }
+          };
+      }
+    
+      function reset () {
+    
+          var shownElements = document.getElementsByClassName('show');
+          var filterElements = document.querySelectorAll('input[type=checkbox]');
+    
+          for (var i = 0, il = filterElements.length; i < il; ++i) {
+              filterElements[i].checked = false;
+          }
+    
+          // Check any filters with visible elements
+          for (i = 0, il = shownElements.length; i < il; ++i) {
+              var shownElement = shownElements[i];
+              var classNames = shownElement.className.split(' ');
+              for (var ci = 0, cl = classNames.length; ci < cl; ++ci){
+                  var element = document.getElementById('show-' + classNames[ci]);
+                  if (element) {
+                      element.checked = true;
+                  }
+              }
+          }
+      };
+    
+      function filter (element) {
+    
+          toggle(element.value);
+          reset();
+      }
+    </script>
+    <style>
+        body {
+            font: 14px/1.6 Helvetica, Arial, sans-serif;
+            margin: 0;
+            color: #2c2c2c;
+        }
+    
+        #tests, #coverage, #linting {
+            padding: 60px;
+        }
+    
+        h1 a:hover {
+            text-decoration: none;
+        }
+    
+        a[href^="#"],
+        a[href^="#"]:visited {
+            color: inherit;
+            text-decoration: none;
+        }
+    
+        h2 {
+            width: 80%;
+            margin-top: 80px;
+            margin-bottom: 0;
+            font-weight: 100;
+            letter-spacing: 1px;
+        }
+    
+        ul {
+            margin-top: 20px;
+            padding: 0 15px;
+            width: 100%;
+        }
+    
+        ul li {
+            float: left;
+            width: 40%;
+            margin-top: 5px;
+            margin-right: 60px;
+            list-style: none;
+            padding: 5px 0;
+            font-size: 12px;
+        }
+    
+        #menu {
+            position: fixed;
+            font-size: 12px;
+            overflow-y: auto;
+            top: 0;
+            right: 0;
+            margin: 0;
+            height: 100%;
+            padding: 15px 15px;
+            border-left: 1px solid #eee;
+            background-color: #666;
+            z-index: 1;
+        }
+    
+        #menu::after {
+            display: block;
+            content: '';
+            padding-top: 80px;
+        }
+    
+        #menu li a {
+            display: block;
+            color: white;
+            padding: 0 5px 0 35px;
+            transition: background 300ms;
+            text-decoration: none;
+        }
+    
+        #menu li {
+            position: relative;
+            list-style: none;
+        }
+    
+        #menu a:hover,
+        #menu a.active {
+            text-decoration: none;
+            background: rgba(255, 255, 255, .4);
+        }
+    
+        #menu li:hover .cov {
+            opacity: 1;
+        }
+    
+        #menu li .dirname {
+            opacity: .60;
+            padding-right: 2px;
+        }
+    
+        #menu li .basename {
+            opacity: 1;
+        }
+    
+        #menu .cov, #menu .lint {
+            background: rgba(0, 0, 0, .3);
+            position: absolute;
+            top: 0;
+            font-size: 9px;
+            text-align: center;
+            opacity: .8;
+            width: 22px;
+            border-radius: 10px;
+            padding: 2px 3px;
+        }
+    
+        #files .stats:nth-child(2n):not(.hide) {
+            display: inline-block;
+            margin-top: 15px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    
+        .stats div {
+            float: left;
+            padding: 0 5px;
+        }
+    
+        .stats::after {
+            display: block;
+            content: '';
+            clear: both;
+        }
+    
+        .stats .sloc::after {
+            content: ' SLOC';
+            color: #b6b6b6;
+        }
+    
+        .stats .percentage::after {
+            content: ' coverage';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::after {
+            content: ' Covered';
+            color: #b6b6b6;
+        }
+    
+        .stats .misses::after {
+            content: ' Not Covered)';
+            color: #b6b6b6;
+        }
+    
+        .stats .failures::after {
+            content: ' Failures';
+            color: #b6b6b6;
+        }
+    
+        .stats .skipped::after {
+            content: ' Skipped';
+            color: #b6b6b6;
+        }
+    
+        .stats .test-count::after {
+            content: ' Tests';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::after {
+            content: ' ms)';
+            color: #b6b6b6;
+        }
+    
+        .high {
+            color: #00d4b4;
+        }
+    
+        .medium {
+            color: #e87d0d;
+        }
+    
+        .low {
+            color: #d4081a;
+        }
+    
+        .terrible {
+            color: #d4081a;
+            font-weight: bold;
+        }
+    
+        #files table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #files thead {
+            display: none;
+        }
+    
+        table td.line,
+        table td.lint,
+        table td.hits,
+        table td.original-line {
+            width: 20px;
+            background: #eaeaea;
+            text-align: right;
+            font-size: 11px;
+            padding: 0 10px;
+            color: #949494;
+            white-space: nowrap;
+        }
+    
+        table td.hits {
+            width: 10px;
+            padding: 2px 5px;
+            color: rgba(0, 0, 0, .2);
+            background: #f0f0f0;
+        }
+    
+        table td.lint.empty {
+            width: 0;
+            padding: 0;
+        }
+    
+        table td.lint > span {
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            vertical-align: baseline;
+        }
+    
+        table td.lint .errors {
+            background-color: red;
+        }
+    
+        table td.lint .warnings {
+            background-color: orange;
+        }
+    
+        tr.miss td.line,
+        tr.miss td.hits {
+            background: #e6c3c7;
+        }
+    
+        tr.miss td {
+            background: #f8d5d8;
+        }
+    
+        td.source {
+            padding-left: 15px;
+            line-height: 15px;
+            white-space: pre;
+            font: 12px monaco, monospace;
+        }
+    
+        td.source div {
+            display: inline-block;
+        }
+    
+        td.source div.true {
+            background: #bae8bf;
+        }
+    
+        td.source div.false {
+            background: #e8e5ba;
+        }
+    
+        td.source div.never {
+            background: #f8d5d8;
+        }
+    
+        #tests table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #tests thead {
+            background: #F5F5F5;
+        }
+    
+        #tests tr {
+            border: 1px solid #ccc;
+        }
+    
+        #tests td {
+            padding-left: 8px;
+            vertical-align: top;
+        }
+    
+        #tests .success:nth-child(2n) {
+            background: #F5F5F5;
+        }
+    
+        #tests .failure {
+            background: #FF9E9E;
+        }
+    
+        #tests table .skipped {
+            background: #AA82FF;
+        }
+    
+        #tests .success {
+            color: #949494;
+        }
+    
+        #tests .failure .test-title {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    
+        #tests .stack {
+            margin-top: 4px;
+            padding-left: 15px;
+            margin-bottom: 12px;
+            font: 12px monaco, monospace;
+            white-space: pre;
+            line-height: 15px;
+        }
+    
+        .hide {
+            display: none;
+        }
+    
+        .show {
+            display: inherit;
+        }
+    
+        #tests table .show {
+            display: table-row;
+        }
+    
+        [data-tooltip] {
+            position: relative;
+        }
+    
+        [data-tooltip]:hover:before {
+            border: solid;
+            border-color: #333 transparent;
+            border-width: 6px 6px 0 6px;
+            bottom: 20px;
+            content: "";
+            left: 0;
+            position: absolute;
+            z-index: 99;
+        }
+    
+        [data-tooltip]:hover:after {
+            background: #333;
+            background: rgba(0, 0, 0, .8);
+            border-radius: 5px;
+            bottom: 26px;
+            color: #fff;
+            left: -10px;
+            padding: 5px 15px;
+            position: absolute;
+            z-index: 98;
+            content: attr(data-tooltip);
+            white-space: pre;
+            text-align: left;
+        }
+    
+        .line[data-tooltip]:hover:after {
+            content: "Line number";
+        }
+    
+        .hits[data-tooltip]:hover:after {
+            content: "Number of hits";
+        }
+    
+        .miss .source[data-tooltip]:hover:after {
+            content: "Missed line";
+        }
+    
+        .miss.true[data-tooltip]:hover:after {
+            content: "Condition always true";
+        }
+    
+        .miss.false[data-tooltip]:hover:after {
+            content: "Condition always false";
+        }
+    
+        .miss.never[data-tooltip]:hover:after {
+            content: "Statement never reached";
+        }
+    
+        .lint .errors[data-tooltip]:hover:after {
+            content: "Linting errors:\A" attr(data-tooltip);
+        }
+    
+        .lint .warnings[data-tooltip]:hover:after {
+            content: "Linting warnings:\A" attr(data-tooltip);
+        }
+    
+        .original-line[data-tooltip]:hover:after {
+            content: "Original line in file " attr(data-tooltip);
+        }
+    
+        #filters {
+            width: 75%;
+            margin-top: 25px;
+        }
+    
+        #filters label {
+            margin-right: 10px;
+        }
+    
+        .lint-stats .lint-errors::after {
+            content: ' linting errors';
+            color: #b6b6b6;
+        }
+    
+        .lint-stats .lint-warnings::after {
+            content: ' linting warnings';
+            color: #b6b6b6;
+        }
+    
+        .lint-entry {
+            color: #b6b6b6;
+            float: none;
+            padding: 0;
+        }
+    
+        .lint-entry .level-ERROR {
+            color: #d4081a;
+        }
+    
+        .lint-entry .level-WARNING {
+            color: #e87d0d;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="menu">
+        <li><a href="#tests">Test Report</a></li>
+        <li><a href="#coverage">Coverage Report</a></li>
+        <li class="">
+            <span class="cov high">100</span>
+            <a href="#lib/index.js"><span class="dirname">lib/</span><span class="basename">index.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">81.10</span>
+            <a href="#lib/utils.js"><span class="dirname">lib/</span><span class="basename">utils.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">100</span>
+            <a href="#lib/errors/localeNotFoundError.js"><span class="dirname">lib/errors/</span><span class="basename">localeNotFoundError.js</span></a>
+        </li>
+        <li><a href="#linting">Linting Report</a></li>
+    </div>
+    <div id="tests">
+      <h1>Test Report</h1>
+      <div class="stats high">
+          <div class="failures">0</div>
+          <div class="skipped">0</div>
+          <div class="test-count">22</div>
+          <div class="duration">30</div>
+      </div>
+      <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="success" id="show-success">
+          <label for="show-success">Show Success</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="failure" id="show-failure">
+          <label for="show-failure">Show Failure</label>
+          <br>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Utils" id="show-Utils">
+          <label for="show-Utils">Utils</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="index" id="show-index">
+          <label for="show-index">index</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="translate" id="show-translate">
+          <label for="show-translate">translate</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="i18n_format" id="show-i18n_format">
+          <label for="show-i18n_format">i18n format</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="translatable" id="show-translatable">
+          <label for="show-translatable">translatable</label>
+      </div>
+      <table>
+          <thead>
+          <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Duration (ms)</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="show Utils success">
+              <td class="test-id">1</td>
+              <td class="test-title">Utils renames class
+                  
+              </td>
+              <td class="test-duration">10</td>
+          </tr>
+          <tr class="show Utils success">
+              <td class="test-id">2</td>
+              <td class="test-title">Utils i18n array
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show Utils success">
+              <td class="test-id">3</td>
+              <td class="test-title">Utils i18n objection plugin
+                  
+              </td>
+              <td class="test-duration">4</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">4</td>
+              <td class="test-title">index should return an array of exactly two items
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">5</td>
+              <td class="test-title">index should return a translation model with default name
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">6</td>
+              <td class="test-title">index should return a translation model with correct idColumn
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">7</td>
+              <td class="test-title">index should return a translation model with different table name
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">8</td>
+              <td class="test-title">index should return a translation model with a different class name
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">9</td>
+              <td class="test-title">index should return a translation object with a valid joi object
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">10</td>
+              <td class="test-title">index should return a model with valid relation mappings
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show index success">
+              <td class="test-id">11</td>
+              <td class="test-title">index should extend base joi schema to add relation mapping
+                  
+              </td>
+              <td class="test-duration">3</td>
+          </tr>
+          <tr class="show index translate success">
+              <td class="test-id">12</td>
+              <td class="test-title">index translate should return the object as is if no locale is passed
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index translate success">
+              <td class="test-id">13</td>
+              <td class="test-title">index translate should transform the object with given locale
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index translate success">
+              <td class="test-id">14</td>
+              <td class="test-title">index translate should throw error if locale not found
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show index translate success">
+              <td class="test-id">15</td>
+              <td class="test-title">index translate should translate even if missing locales
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index translate success">
+              <td class="test-id">16</td>
+              <td class="test-title">index translate should add tag to show the language
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index i18n_format success">
+              <td class="test-id">17</td>
+              <td class="test-title">index i18n format should return model when locale is defaultLocale
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index i18n_format success">
+              <td class="test-id">18</td>
+              <td class="test-title">index i18n format should return model when no local is given
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show index i18n_format success">
+              <td class="test-id">19</td>
+              <td class="test-title">index i18n format should create correct model for database
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index i18n_format success">
+              <td class="test-id">20</td>
+              <td class="test-title">index i18n format should override existing translations
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          <tr class="show index i18n_format success">
+              <td class="test-id">21</td>
+              <td class="test-title">index i18n format should keep any existing locales
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          <tr class="show index translatable success">
+              <td class="test-id">22</td>
+              <td class="test-title">index translatable should define translatable properties
+                  
+              </td>
+              <td class="test-duration">0</td>
+          </tr>
+          </tbody>
+      </table>
+    
+    </div>    <div id="coverage">
+        <h1>Code Coverage Report</h1>
+        <div class="stats high">
+            <div class="percentage">88.35%</div>
+            <div class="sloc">206</div>
+            <div class="hits">182</div>
+            <div class="misses">24</div>
+        </div>
+        <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="generated" id="show-generated">
+          <label for="show-generated">Show generated files</label>
+        </div>
+        <div id="files">
+            <div class="file ">
+                <h2 id="lib/index.js">lib/index.js </h2>
+                <div class="stats high">
+                    <div class="percentage">100%</div>
+                    <div class="sloc">75</div>
+                    <div class="hits">75</div>
+                    <div class="misses">0</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/index.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">&#x27;use strict&#x27;;</td>
+                          
+                        </tr>            <tr id="lib/index.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Hoek  &#x3D; require(&#x27;hoek&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/index.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Model &#x3D; require(&#x27;schwifty&#x27;).Model;</td>
+                          
+                        </tr>            <tr id="lib/index.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Joi   &#x3D; require(&#x27;joi&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/index.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Utils &#x3D; require(&#x27;./utils&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/index.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports &#x3D; (baseModel, customOptions &#x3D; {}) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/index.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    const options &#x3D; Hoek.applyToDefaults({</td>
+                          
+                        </tr>            <tr id="lib/index.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        translationTable : &#x60;${baseModel.getTableName()}Translation&#x60;,</td>
+                          
+                        </tr>            <tr id="lib/index.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        translationModel : &#x60;${baseModel.getTableName()}Translation&#x60;,</td>
+                          
+                        </tr>            <tr id="lib/index.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        relation         : &#x27;i18n&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/index.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        modelName        : baseModel.name,</td>
+                          
+                        </tr>            <tr id="lib/index.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        defaultLocale    : &#x27;EN&#x27;</td>
+                          
+                        </tr>            <tr id="lib/index.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }, customOptions);</td>
+                          
+                        </tr>            <tr id="lib/index.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>6</td>
+                          <td class="source">    const translationModel &#x3D; Utils.renameClass(class extends Model {</td>
+                          
+                        </tr>            <tr id="lib/index.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static get tableName() {</td>
+                          
+                        </tr>            <tr id="lib/index.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return options.translationTable;</td>
+                          
+                        </tr>            <tr id="lib/index.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static get idColumn() {</td>
+                          
+                        </tr>            <tr id="lib/index.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return [&#x27;tableId&#x27;, &#x27;locale&#x27;, &#x27;column&#x27;];</td>
+                          
+                        </tr>            <tr id="lib/index.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static get joiObject() {</td>
+                          
+                        </tr>            <tr id="lib/index.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return {</td>
+                          
+                        </tr>            <tr id="lib/index.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                tableId     : Joi.string(),</td>
+                          
+                        </tr>            <tr id="lib/index.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                locale      : Joi.string().example(&#x27;EN&#x27;),</td>
+                          
+                        </tr>            <tr id="lib/index.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                column      : Joi.string(),</td>
+                          
+                        </tr>            <tr id="lib/index.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                translation : Joi.string()</td>
+                          
+                        </tr>            <tr id="lib/index.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            };</td>
+                          
+                        </tr>            <tr id="lib/index.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__39" class="hit">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__40" class="hit">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }, options.translationModel);</td>
+                          
+                        </tr>            <tr id="lib/index.js__41" class="hit">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>6</td>
+                          <td class="source">    const m &#x3D; Utils.renameClass(class extends Utils.I18ObjectionPlugin({</td>
+                          
+                        </tr>            <tr id="lib/index.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        relation      : options.relation,</td>
+                          
+                        </tr>            <tr id="lib/index.js__44" class="hit">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        defaultLocale : options.defaultLocale</td>
+                          
+                        </tr>            <tr id="lib/index.js__45" class="hit">
+                          <td class="line" data-tooltip>45</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    })(baseModel) {</td>
+                          
+                        </tr>            <tr id="lib/index.js__46" class="hit">
+                          <td class="line" data-tooltip>46</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__47" class="hit">
+                          <td class="line" data-tooltip>47</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static relationMappings() {</td>
+                          
+                        </tr>            <tr id="lib/index.js__48" class="hit">
+                          <td class="line" data-tooltip>48</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__49" class="hit">
+                          <td class="line" data-tooltip>49</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return Hoek.merge({</td>
+                          
+                        </tr>            <tr id="lib/index.js__50" class="hit">
+                          <td class="line" data-tooltip>50</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                [options.relation] : {</td>
+                          
+                        </tr>            <tr id="lib/index.js__51" class="hit">
+                          <td class="line" data-tooltip>51</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    relation   : Model.HasManyRelation,</td>
+                          
+                        </tr>            <tr id="lib/index.js__52" class="hit">
+                          <td class="line" data-tooltip>52</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    modelClass : translationModel,</td>
+                          
+                        </tr>            <tr id="lib/index.js__53" class="hit">
+                          <td class="line" data-tooltip>53</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    join       : {</td>
+                          
+                        </tr>            <tr id="lib/index.js__54" class="hit">
+                          <td class="line" data-tooltip>54</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        from : &#x60;${super.tableName}.id&#x60;,</td>
+                          
+                        </tr>            <tr id="lib/index.js__55" class="hit">
+                          <td class="line" data-tooltip>55</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        to   : &#x60;${translationModel.tableName}.tableId&#x60;</td>
+                          
+                        </tr>            <tr id="lib/index.js__56" class="hit">
+                          <td class="line" data-tooltip>56</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    }</td>
+                          
+                        </tr>            <tr id="lib/index.js__57" class="hit">
+                          <td class="line" data-tooltip>57</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                }</td>
+                          
+                        </tr>            <tr id="lib/index.js__58" class="hit">
+                          <td class="line" data-tooltip>58</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            }, Hoek.reach(baseModel, &#x27;relationMappings&#x27;, {}));</td>
+                          
+                        </tr>            <tr id="lib/index.js__59" class="hit">
+                          <td class="line" data-tooltip>59</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__60" class="hit">
+                          <td class="line" data-tooltip>60</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__61" class="hit">
+                          <td class="line" data-tooltip>61</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static get translatable() {</td>
+                          
+                        </tr>            <tr id="lib/index.js__62" class="hit">
+                          <td class="line" data-tooltip>62</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__63" class="hit">
+                          <td class="line" data-tooltip>63</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            const translatable &#x3D; [];</td>
+                          
+                        </tr>            <tr id="lib/index.js__64" class="hit">
+                          <td class="line" data-tooltip>64</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__65" class="hit">
+                          <td class="line" data-tooltip>65</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>9</td>
+                          <td class="source">            const children &#x3D; Hoek.reach(super.joiSchema.describe(), &#x27;children&#x27;, { default : {} });</td>
+                          
+                        </tr>            <tr id="lib/index.js__66" class="hit">
+                          <td class="line" data-tooltip>66</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__67" class="hit">
+                          <td class="line" data-tooltip>67</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>9</td>
+                          <td class="source">            Object.keys(children).forEach((v) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/index.js__68" class="hit">
+                          <td class="line" data-tooltip>68</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__69" class="hit">
+                          <td class="line" data-tooltip>69</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                const meta &#x3D; Hoek.reach(children[v], &#x27;meta&#x27;, { default : [{ translate : false }] });</td>
+                          
+                        </tr>            <tr id="lib/index.js__70" class="hit">
+                          <td class="line" data-tooltip>70</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__71" class="hit">
+                          <td class="line" data-tooltip>71</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>18</td>
+                          <td class="source">                if (Hoek.contain(meta, { translate : true }, { deep : true })) {</td>
+                          
+                        </tr>            <tr id="lib/index.js__72" class="hit">
+                          <td class="line" data-tooltip>72</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>9</td>
+                          <td class="source">                    translatable.push(v);</td>
+                          
+                        </tr>            <tr id="lib/index.js__73" class="hit">
+                          <td class="line" data-tooltip>73</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                }</td>
+                          
+                        </tr>            <tr id="lib/index.js__74" class="hit">
+                          <td class="line" data-tooltip>74</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            });</td>
+                          
+                        </tr>            <tr id="lib/index.js__75" class="hit">
+                          <td class="line" data-tooltip>75</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__76" class="hit">
+                          <td class="line" data-tooltip>76</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>9</td>
+                          <td class="source">            return translatable;</td>
+                          
+                        </tr>            <tr id="lib/index.js__77" class="hit">
+                          <td class="line" data-tooltip>77</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__78" class="hit">
+                          <td class="line" data-tooltip>78</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__79" class="hit">
+                          <td class="line" data-tooltip>79</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static get joiSchema() {</td>
+                          
+                        </tr>            <tr id="lib/index.js__80" class="hit">
+                          <td class="line" data-tooltip>80</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__81" class="hit">
+                          <td class="line" data-tooltip>81</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return super.joiSchema.keys({</td>
+                          
+                        </tr>            <tr id="lib/index.js__82" class="hit">
+                          <td class="line" data-tooltip>82</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                [options.relation] : Joi.array().items({</td>
+                          
+                        </tr>            <tr id="lib/index.js__83" class="hit">
+                          <td class="line" data-tooltip>83</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    locale      : Joi.string(),</td>
+                          
+                        </tr>            <tr id="lib/index.js__84" class="hit">
+                          <td class="line" data-tooltip>84</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    column      : Joi.string().allow(this.translatable),</td>
+                          
+                        </tr>            <tr id="lib/index.js__85" class="hit">
+                          <td class="line" data-tooltip>85</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    translation : Joi.string()</td>
+                          
+                        </tr>            <tr id="lib/index.js__86" class="hit">
+                          <td class="line" data-tooltip>86</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                })</td>
+                          
+                        </tr>            <tr id="lib/index.js__87" class="hit">
+                          <td class="line" data-tooltip>87</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            });</td>
+                          
+                        </tr>            <tr id="lib/index.js__88" class="hit">
+                          <td class="line" data-tooltip>88</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__89" class="hit">
+                          <td class="line" data-tooltip>89</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__90" class="hit">
+                          <td class="line" data-tooltip>90</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static translate(model, locale, opts) {</td>
+                          
+                        </tr>            <tr id="lib/index.js__91" class="hit">
+                          <td class="line" data-tooltip>91</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__92" class="hit">
+                          <td class="line" data-tooltip>92</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return Utils.translate(model, locale, options.relation, opts);</td>
+                          
+                        </tr>            <tr id="lib/index.js__93" class="hit">
+                          <td class="line" data-tooltip>93</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__94" class="hit">
+                          <td class="line" data-tooltip>94</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__95" class="hit">
+                          <td class="line" data-tooltip>95</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        static i18nFormat(model, locale) {</td>
+                          
+                        </tr>            <tr id="lib/index.js__96" class="hit">
+                          <td class="line" data-tooltip>96</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__97" class="hit">
+                          <td class="line" data-tooltip>97</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            return Utils.format(Object.assign({}, model), locale, this.translatable, options.relation, options.defaultLocale);</td>
+                          
+                        </tr>            <tr id="lib/index.js__98" class="hit">
+                          <td class="line" data-tooltip>98</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/index.js__99" class="hit">
+                          <td class="line" data-tooltip>99</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__100" class="hit">
+                          <td class="line" data-tooltip>100</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }, options.modelName);</td>
+                          
+                        </tr>            <tr id="lib/index.js__101" class="hit">
+                          <td class="line" data-tooltip>101</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__102" class="hit">
+                          <td class="line" data-tooltip>102</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>6</td>
+                          <td class="source">    return new Utils.I18nArray(m, translationModel);</td>
+                          
+                        </tr>            <tr id="lib/index.js__103" class="hit">
+                          <td class="line" data-tooltip>103</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">};</td>
+                          
+                        </tr>            <tr id="lib/index.js__104" class="hit">
+                          <td class="line" data-tooltip>104</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/index.js__105" class="hit">
+                          <td class="line" data-tooltip>105</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports.LocaleNotFoundError &#x3D; require(&#x27;./errors/localeNotFoundError&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/index.js__106" class="hit">
+                          <td class="line" data-tooltip>106</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/utils.js">lib/utils.js </h2>
+                <div class="stats high">
+                    <div class="percentage">81.10%</div>
+                    <div class="sloc">127</div>
+                    <div class="hits">103</div>
+                    <div class="misses">24</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/utils.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">&#x27;use strict&#x27;;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const LocaleNotFoundError &#x3D; require(&#x27;./errors/localeNotFoundError&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports.renameClass &#x3D; (cls, name) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    return ({</td>
+                          
+                        </tr>            <tr id="lib/utils.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        [name] : class extends cls {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    })[name];</td>
+                          
+                        </tr>            <tr id="lib/utils.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">};</td>
+                          
+                        </tr>            <tr id="lib/utils.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports.I18nArray &#x3D; class I18nArray extends Array {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    constructor(model, translation) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        super();</td>
+                          
+                        </tr>            <tr id="lib/utils.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>7</td>
+                          <td class="source">        this._model       &#x3D; model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>7</td>
+                          <td class="source">        this._translation &#x3D; translation;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>7</td>
+                          <td class="source">        this.push(model, translation);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    get model() {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        return this._model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    get translation() {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        return this._translation;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">};</td>
+                          
+                        </tr>            <tr id="lib/utils.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const format &#x3D; (model, locale, translatable, relation, defaultLocale) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    if (!locale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">        return model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__39" class="hit">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__40" class="hit">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>5</td>
+                          <td class="source">    if (locale &#x3D;&#x3D;&#x3D; defaultLocale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__41" class="hit">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">        return model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__44" class="hit">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    if (!model[relation]) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__45" class="hit">
+                          <td class="line" data-tooltip>45</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">        model[relation] &#x3D; [];</td>
+                          
+                        </tr>            <tr id="lib/utils.js__46" class="hit">
+                          <td class="line" data-tooltip>46</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__47" class="hit">
+                          <td class="line" data-tooltip>47</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__48" class="hit">
+                          <td class="line" data-tooltip>48</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    translatable.forEach((column) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__49" class="hit">
+                          <td class="line" data-tooltip>49</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__50" class="hit">
+                          <td class="line" data-tooltip>50</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        const index       &#x3D; model[relation].findIndex((t) &#x3D;&gt; t.locale &#x3D;&#x3D;&#x3D; locale &amp;&amp; t.column &#x3D;&#x3D;&#x3D; column);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__51" class="hit">
+                          <td class="line" data-tooltip>51</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">        const translation &#x3D; model[column];</td>
+                          
+                        </tr>            <tr id="lib/utils.js__52" class="hit">
+                          <td class="line" data-tooltip>52</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">        delete model[column];</td>
+                          
+                        </tr>            <tr id="lib/utils.js__53" class="hit">
+                          <td class="line" data-tooltip>53</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__54" class="hit">
+                          <td class="line" data-tooltip>54</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">        if (index &#x3D;&#x3D;&#x3D; -1) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__55" class="hit">
+                          <td class="line" data-tooltip>55</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__56" class="hit">
+                          <td class="line" data-tooltip>56</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">            return model[relation].push({</td>
+                          
+                        </tr>            <tr id="lib/utils.js__57" class="hit">
+                          <td class="line" data-tooltip>57</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                locale : locale.toUpperCase(),</td>
+                          
+                        </tr>            <tr id="lib/utils.js__58" class="hit">
+                          <td class="line" data-tooltip>58</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                column,</td>
+                          
+                        </tr>            <tr id="lib/utils.js__59" class="hit">
+                          <td class="line" data-tooltip>59</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                translation</td>
+                          
+                        </tr>            <tr id="lib/utils.js__60" class="hit">
+                          <td class="line" data-tooltip>60</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            });</td>
+                          
+                        </tr>            <tr id="lib/utils.js__61" class="hit">
+                          <td class="line" data-tooltip>61</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__62" class="hit">
+                          <td class="line" data-tooltip>62</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__63" class="hit">
+                          <td class="line" data-tooltip>63</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__64" class="hit">
+                          <td class="line" data-tooltip>64</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">        model[relation][index].translation &#x3D; translation;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__65" class="hit">
+                          <td class="line" data-tooltip>65</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    });</td>
+                          
+                        </tr>            <tr id="lib/utils.js__66" class="hit">
+                          <td class="line" data-tooltip>66</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__67" class="hit">
+                          <td class="line" data-tooltip>67</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    return model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__68" class="hit">
+                          <td class="line" data-tooltip>68</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">};</td>
+                          
+                        </tr>            <tr id="lib/utils.js__69" class="hit">
+                          <td class="line" data-tooltip>69</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__70" class="hit">
+                          <td class="line" data-tooltip>70</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const translate &#x3D; (model, locale, relation, options &#x3D; {}) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__71" class="hit">
+                          <td class="line" data-tooltip>71</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__72" class="hit">
+                          <td class="line" data-tooltip>72</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    if (!locale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__73" class="hit">
+                          <td class="line" data-tooltip>73</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__74" class="hit">
+                          <td class="line" data-tooltip>74</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">        return model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__75" class="hit">
+                          <td class="line" data-tooltip>75</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__76" class="hit">
+                          <td class="line" data-tooltip>76</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__77" class="hit">
+                          <td class="line" data-tooltip>77</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    let hasLocale &#x3D; false;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__78" class="hit">
+                          <td class="line" data-tooltip>78</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__79" class="hit">
+                          <td class="line" data-tooltip>79</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    model[relation].forEach((v) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__80" class="hit">
+                          <td class="line" data-tooltip>80</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__81" class="hit">
+                          <td class="line" data-tooltip>81</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        if (v.locale &#x3D;&#x3D;&#x3D; locale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__82" class="hit">
+                          <td class="line" data-tooltip>82</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">            model[v.column] &#x3D; v.translation;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__83" class="hit">
+                          <td class="line" data-tooltip>83</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">            hasLocale       &#x3D; true;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__84" class="hit">
+                          <td class="line" data-tooltip>84</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__85" class="hit">
+                          <td class="line" data-tooltip>85</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    });</td>
+                          
+                        </tr>            <tr id="lib/utils.js__86" class="hit">
+                          <td class="line" data-tooltip>86</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__87" class="hit">
+                          <td class="line" data-tooltip>87</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">    if (!hasLocale &amp;&amp; !options.keep) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__88" class="hit">
+                          <td class="line" data-tooltip>88</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">        throw new LocaleNotFoundError(&#x27;locale not found&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__89" class="hit">
+                          <td class="line" data-tooltip>89</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__90" class="hit">
+                          <td class="line" data-tooltip>90</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__91" class="hit">
+                          <td class="line" data-tooltip>91</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">    if (options.tag &amp;&amp; hasLocale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__92" class="hit">
+                          <td class="line" data-tooltip>92</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">        model[options.tag] &#x3D; locale;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__93" class="hit">
+                          <td class="line" data-tooltip>93</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__94" class="hit">
+                          <td class="line" data-tooltip>94</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__95" class="hit">
+                          <td class="line" data-tooltip>95</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">    delete model[relation];</td>
+                          
+                        </tr>            <tr id="lib/utils.js__96" class="hit">
+                          <td class="line" data-tooltip>96</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__97" class="hit">
+                          <td class="line" data-tooltip>97</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>3</td>
+                          <td class="source">    return model;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__98" class="hit">
+                          <td class="line" data-tooltip>98</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">};</td>
+                          
+                        </tr>            <tr id="lib/utils.js__99" class="hit">
+                          <td class="line" data-tooltip>99</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__100" class="hit">
+                          <td class="line" data-tooltip>100</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports.I18ObjectionPlugin &#x3D; (options &#x3D; { relation : &#x27;i18n&#x27; }) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__101" class="hit">
+                          <td class="line" data-tooltip>101</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__102" class="hit">
+                          <td class="line" data-tooltip>102</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    const getTranslations &#x3D; (queryBuilder, model, idColumn) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__103" class="hit">
+                          <td class="line" data-tooltip>103</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__104" class="chunks">
+                          <td class="line" data-tooltip>104</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>        </div><div class="miss never" data-tooltip>queryBuilder.eager(options.relation).first();</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__105" class="hit">
+                          <td class="line" data-tooltip>105</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__106" class="miss">
+                          <td class="line" data-tooltip>106</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>        if (Array.isArray(idColumn)) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__107" class="miss">
+                          <td class="line" data-tooltip>107</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>            idColumn.forEach((col) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__108" class="hit">
+                          <td class="line" data-tooltip>108</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__109" class="chunks">
+                          <td class="line" data-tooltip>109</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>                </div><div class="miss never" data-tooltip>queryBuilder.where(col, model[col]);</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__110" class="hit">
+                          <td class="line" data-tooltip>110</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            });</td>
+                          
+                        </tr>            <tr id="lib/utils.js__111" class="hit">
+                          <td class="line" data-tooltip>111</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__112" class="hit">
+                          <td class="line" data-tooltip>112</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        else {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__113" class="hit">
+                          <td class="line" data-tooltip>113</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__114" class="miss">
+                          <td class="line" data-tooltip>114</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>            queryBuilder.where(idColumn, model[idColumn]);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__115" class="hit">
+                          <td class="line" data-tooltip>115</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__116" class="hit">
+                          <td class="line" data-tooltip>116</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__117" class="miss">
+                          <td class="line" data-tooltip>117</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>        return queryBuilder;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__118" class="hit">
+                          <td class="line" data-tooltip>118</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    };</td>
+                          
+                        </tr>            <tr id="lib/utils.js__119" class="hit">
+                          <td class="line" data-tooltip>119</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__120" class="hit">
+                          <td class="line" data-tooltip>120</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>8</td>
+                          <td class="source">    return (objectionModel) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__121" class="hit">
+                          <td class="line" data-tooltip>121</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__122" class="hit">
+                          <td class="line" data-tooltip>122</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        return class extends objectionModel {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__123" class="hit">
+                          <td class="line" data-tooltip>123</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__124" class="hit">
+                          <td class="line" data-tooltip>124</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            static get QueryBuilder() {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__125" class="hit">
+                          <td class="line" data-tooltip>125</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__126" class="hit">
+                          <td class="line" data-tooltip>126</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                return class I18nQueryBuilder extends objectionModel.QueryBuilder {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__127" class="hit">
+                          <td class="line" data-tooltip>127</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__128" class="hit">
+                          <td class="line" data-tooltip>128</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    i18n(locale, opts &#x3D; {}) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__129" class="hit">
+                          <td class="line" data-tooltip>129</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__130" class="hit">
+                          <td class="line" data-tooltip>130</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        this.eager(options.relation);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__131" class="hit">
+                          <td class="line" data-tooltip>131</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__132" class="hit">
+                          <td class="line" data-tooltip>132</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">                        if (!locale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__133" class="hit">
+                          <td class="line" data-tooltip>133</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">                            return this;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__134" class="hit">
+                          <td class="line" data-tooltip>134</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__135" class="hit">
+                          <td class="line" data-tooltip>135</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__136" class="hit">
+                          <td class="line" data-tooltip>136</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">                        locale &#x3D; locale.toUpperCase();</td>
+                          
+                        </tr>            <tr id="lib/utils.js__137" class="hit">
+                          <td class="line" data-tooltip>137</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__138" class="hit">
+                          <td class="line" data-tooltip>138</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">                        return this.modifyEager(options.relation, (builder) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__139" class="hit">
+                          <td class="line" data-tooltip>139</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__140" class="hit">
+                          <td class="line" data-tooltip>140</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                            builder.where(&#x27;locale&#x27;, locale);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__141" class="hit">
+                          <td class="line" data-tooltip>141</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        }).traverse(this.modelClass(), (m, t) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__142" class="hit">
+                          <td class="line" data-tooltip>142</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__143" class="chunks">
+                          <td class="line" data-tooltip>143</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>                            </div><div class="miss never" data-tooltip>if (locale &#x3D;&#x3D;&#x3D; options.defaultLocale) {</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__144" class="miss">
+                          <td class="line" data-tooltip>144</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                                return m;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__145" class="chunks">
+                          <td class="line" data-tooltip>145</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>                            }</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__146" class="hit">
+                          <td class="line" data-tooltip>146</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__147" class="miss">
+                          <td class="line" data-tooltip>147</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                            return translate(m, locale, options.relation, opts);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__148" class="hit">
+                          <td class="line" data-tooltip>148</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        });</td>
+                          
+                        </tr>            <tr id="lib/utils.js__149" class="hit">
+                          <td class="line" data-tooltip>149</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__150" class="hit">
+                          <td class="line" data-tooltip>150</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__151" class="hit">
+                          <td class="line" data-tooltip>151</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    async patchTranslation(model, locale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__152" class="hit">
+                          <td class="line" data-tooltip>152</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__153" class="chunks">
+                          <td class="line" data-tooltip>153</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>                        </div><div class="miss never" data-tooltip>if (locale !&#x3D;&#x3D; options.defaultLocale) { // Don&#x27;t fetch the other translations on a default locale update</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__154" class="hit">
+                          <td class="line" data-tooltip>154</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__155" class="miss">
+                          <td class="line" data-tooltip>155</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                            locale                  &#x3D; locale.toUpperCase();</td>
+                          
+                        </tr>            <tr id="lib/utils.js__156" class="miss">
+                          <td class="line" data-tooltip>156</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                            model[options.relation] &#x3D; (await getTranslations(this.modelClass()</td>
+                          
+                        </tr>            <tr id="lib/utils.js__157" class="hit">
+                          <td class="line" data-tooltip>157</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                                .query(), model, this.modelClass().idColumn))[options.relation];</td>
+                          
+                        </tr>            <tr id="lib/utils.js__158" class="miss">
+                          <td class="line" data-tooltip>158</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                            model                   &#x3D; format(model, locale, this.modelClass().translatable, options.relation, options.defaultLocale);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__159" class="chunks">
+                          <td class="line" data-tooltip>159</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>                        }</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__160" class="hit">
+                          <td class="line" data-tooltip>160</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__161" class="miss">
+                          <td class="line" data-tooltip>161</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                        return this.upsertGraphAndFetch(model).traverse(this.modelClass(), (m) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__162" class="hit">
+                          <td class="line" data-tooltip>162</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__163" class="chunks">
+                          <td class="line" data-tooltip>163</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>                            </div><div class="miss never" data-tooltip>return translate(m, locale, options.relation);</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__164" class="hit">
+                          <td class="line" data-tooltip>164</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                        });</td>
+                          
+                        </tr>            <tr id="lib/utils.js__165" class="hit">
+                          <td class="line" data-tooltip>165</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__166" class="hit">
+                          <td class="line" data-tooltip>166</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__167" class="hit">
+                          <td class="line" data-tooltip>167</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    async deleteTranslation(id, locale) {</td>
+                          
+                        </tr>            <tr id="lib/utils.js__168" class="hit">
+                          <td class="line" data-tooltip>168</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__169" class="chunks">
+                          <td class="line" data-tooltip>169</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>                        </div><div class="miss never" data-tooltip>if (locale &#x3D;&#x3D;&#x3D; options.defaultLocale) {</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__170" class="miss">
+                          <td class="line" data-tooltip>170</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                            throw new Error(&#x27;You can not delete the default locale&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__171" class="chunks">
+                          <td class="line" data-tooltip>171</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>                        }</div></td>
+                          
+                        </tr>            <tr id="lib/utils.js__172" class="hit">
+                          <td class="line" data-tooltip>172</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__173" class="miss">
+                          <td class="line" data-tooltip>173</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                        locale &#x3D; locale.toUpperCase();</td>
+                          
+                        </tr>            <tr id="lib/utils.js__174" class="hit">
+                          <td class="line" data-tooltip>174</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__175" class="miss">
+                          <td class="line" data-tooltip>175</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                        const model &#x3D; (await getTranslations(this.modelClass()</td>
+                          
+                        </tr>            <tr id="lib/utils.js__176" class="hit">
+                          <td class="line" data-tooltip>176</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                            .query(), { [this.modelClass().idColumn] : id }, this.modelClass().idColumn));</td>
+                          
+                        </tr>            <tr id="lib/utils.js__177" class="hit">
+                          <td class="line" data-tooltip>177</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__178" class="miss">
+                          <td class="line" data-tooltip>178</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                        model[options.relation] &#x3D; model[options.relation].filter((translation) &#x3D;&gt; translation.locale !&#x3D;&#x3D; locale);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__179" class="hit">
+                          <td class="line" data-tooltip>179</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__180" class="miss">
+                          <td class="line" data-tooltip>180</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>                        return this.upsertGraph(model);</td>
+                          
+                        </tr>            <tr id="lib/utils.js__181" class="hit">
+                          <td class="line" data-tooltip>181</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                    }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__182" class="hit">
+                          <td class="line" data-tooltip>182</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">                };</td>
+                          
+                        </tr>            <tr id="lib/utils.js__183" class="hit">
+                          <td class="line" data-tooltip>183</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            }</td>
+                          
+                        </tr>            <tr id="lib/utils.js__184" class="hit">
+                          <td class="line" data-tooltip>184</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        };</td>
+                          
+                        </tr>            <tr id="lib/utils.js__185" class="hit">
+                          <td class="line" data-tooltip>185</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    };</td>
+                          
+                        </tr>            <tr id="lib/utils.js__186" class="hit">
+                          <td class="line" data-tooltip>186</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">};</td>
+                          
+                        </tr>            <tr id="lib/utils.js__187" class="hit">
+                          <td class="line" data-tooltip>187</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/utils.js__188" class="hit">
+                          <td class="line" data-tooltip>188</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports.translate &#x3D; translate;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__189" class="hit">
+                          <td class="line" data-tooltip>189</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports.format    &#x3D; format;</td>
+                          
+                        </tr>            <tr id="lib/utils.js__190" class="hit">
+                          <td class="line" data-tooltip>190</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/errors/localeNotFoundError.js">lib/errors/localeNotFoundError.js </h2>
+                <div class="stats high">
+                    <div class="percentage">100%</div>
+                    <div class="sloc">4</div>
+                    <div class="hits">4</div>
+                    <div class="misses">0</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/errors/localeNotFoundError.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">&#x27;use strict&#x27;;</td>
+                          
+                        </tr>            <tr id="lib/errors/localeNotFoundError.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/errors/localeNotFoundError.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">class LocalNotFoundError extends Error {</td>
+                          
+                        </tr>            <tr id="lib/errors/localeNotFoundError.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="lib/errors/localeNotFoundError.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/errors/localeNotFoundError.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">module.exports &#x3D; LocalNotFoundError;</td>
+                          
+                        </tr>            <tr id="lib/errors/localeNotFoundError.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>    <div id="linting">
+        <h1>Linting Report</h1>
+            <div class="lint-stats">
+                <span class="lint-errors high">0</span>
+                <span class="lint-warnings high">0</span>
+            </div>
+            <div class="lint-files">
+            </div>
+    </div>  </body>
+</html>

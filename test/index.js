@@ -75,7 +75,7 @@ describe('Utils', () => {
                             where(column, value) {
 
                                 expect(column).to.equal('locale');
-                                expect(value).to.equal('fr');
+                                expect(value).to.equal('FR');
                             }
                         };
 
@@ -152,6 +152,11 @@ describe('index', () => {
     it('should return a translation model with default name', () => {
 
         expect(modelsNoOptions.translation.name).to.equal('baseTranslation');
+    });
+
+    it('should return a translation model with correct idColumn', () => {
+
+        expect(modelsNoOptions.translation.idColumn).to.equal(['tableId', 'locale', 'column']);
     });
 
     it('should return a translation model with different table name', () => {
@@ -251,11 +256,59 @@ describe('index', () => {
                         }
                     ]
                 }, 'notalocale');
-            }).to.throw();
+            }).to.throw(SchwiftyI18n.LocaleNotFoundError);
+        });
+
+        it('should translate even if missing locales', () => {
+
+            expect(modelsNoOptions.model.translate({
+                test : 'test',
+                i18n : [
+                    {
+                        locale      : 'FR',
+                        column      : 'test',
+                        translation : 'traduction'
+                    }
+                ]
+            }, 'notalocale', { keep : true })).to.equal({ test : 'test' });
+        });
+
+        it('should add tag to show the language', () => {
+
+            expect(modelsNoOptions.model.translate({
+                test : 'test',
+                i18n : [
+                    {
+                        locale      : 'FR',
+                        column      : 'test',
+                        translation : 'traduction'
+                    }
+                ]
+            }, 'FR', { tag: 'lang' }).lang).to.equal('FR');
         });
     });
 
     describe('i18n format', () => {
+
+        it('should return model when locale is defaultLocale', () => {
+
+            const model = {
+                id   : 1,
+                name : 'test'
+            };
+
+            expect(modelsNoOptions.model.i18nFormat(model, 'EN')).to.equal(model);
+        });
+
+        it('should return model when no local is given', () => {
+
+            const model = {
+                id   : 1,
+                name : 'test'
+            };
+
+            expect(modelsNoOptions.model.i18nFormat(model)).to.equal(model);
+        });
 
         it('should create correct model for database', () => {
 
@@ -264,9 +317,9 @@ describe('index', () => {
                 name : 'nom'
             };
 
-            expect(modelsNoOptions.model.i18nFormat(model, 'fr'))
+            expect(modelsNoOptions.model.i18nFormat(model, 'FR'))
                 .to
-                .equal({ id : model.id, i18n : [{ locale : 'fr', column : 'name', translation : 'nom' }] });
+                .equal({ id : model.id, i18n : [{ locale : 'FR', column : 'name', translation : 'nom' }] });
 
         });
 
@@ -288,13 +341,13 @@ describe('index', () => {
             const model = {
                 id   : 1,
                 name : 'nom',
-                i18n : [{ locale : 'en', column : 'name', translation : 'name' }]
+                i18n : [{ locale : 'EN', column : 'name', translation : 'name' }]
             };
 
-            expect(modelsNoOptions.model.i18nFormat(model, 'fr').i18n.length).to.equal(2);
-            expect(modelsNoOptions.model.i18nFormat(model, 'fr').i18n)
+            expect(modelsNoOptions.model.i18nFormat(model, 'FR').i18n.length).to.equal(2);
+            expect(modelsNoOptions.model.i18nFormat(model, 'FR').i18n)
                 .to
-                .equal([{ locale : 'en', column : 'name', translation : 'name' }, { locale : 'fr', column : 'name', translation : 'nom' }]);
+                .equal([{ locale : 'EN', column : 'name', translation : 'name' }, { locale : 'FR', column : 'name', translation : 'nom' }]);
 
         });
     });
