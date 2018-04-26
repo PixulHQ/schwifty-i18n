@@ -1,6 +1,6 @@
 {
   "name": "schwifty-i18n",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A Schwifty plugin to make the task of i18n easier and less repetitive",
   "main": "lib/index.js",
   "scripts": {
