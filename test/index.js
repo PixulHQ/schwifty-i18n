@@ -79,9 +79,9 @@ describe('Utils', () => {
                             }
                         };
 
-                        expect(this._eagerFiltersAtPath.length).to.equal(1);
+                        expect(this._eagerModifiersAtPath.length).to.equal(1);
 
-                        this._eagerFiltersAtPath[0].filter(builder);
+                        this._eagerModifiersAtPath[0].modifier(builder);
                     }
                 };
             }
